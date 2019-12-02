@@ -60,7 +60,7 @@ class Merger(threading.Thread):
     def output(self, line):
         line, kind, timestamp = line
         formatted_time = datetime.datetime.fromtimestamp(timestamp).isoformat()
-        sys.stdout.write('[egior:%s %s] %s' % (kind, formatted_time, line))
+        sys.stdout.write('[egos:%s %s] %s' % (kind, formatted_time, line))
 
 sr_out = StreamReader(p.stdout, 'O')
 sr_out.start()
