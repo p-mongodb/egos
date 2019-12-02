@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+
+import subprocess, sys, os, threading, time, datetime
+
+class ResettableEvent(object):
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.cond = threading.Condition(self.lock)
+        
+    def set(self):
+        with self.lock:
+            self.cond.notify()
+            
+    def wait(self):
+        with self.lock:
+            self.cond.wait()
+
+p = subprocess.Popen(sys.argv[1:],
+    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+lines = []
+lines_lock = threading.Lock()
+lines_event = ResettableEvent()
+done = False
+
+class StreamReader(threading.Thread):
+    def __init__(self, stream, kind):
+        super(StreamReader, self).__init__()
+        self.stream = stream
+        self.kind = kind
+        self.event = threading.Event()
+        
+    def run(self):
+        while True:
+            line = self.stream.readline()
+            if not line:
+                break
+            with lines_lock:
+                lines.append((line, self.kind, time.time()))
+            lines_event.set()
+        self.event.set()
+
+class Merger(threading.Thread):
+    def __init__(self):
+        super(Merger, self).__init__()
+        self.event = threading.Event()
+        
+    def run(self):
+        global lines
+        while True:
+            with lines_lock:
+                for line in lines:
+                    self.output(line)
+                lines = []
+            if done:
+                self.event.set()
+                return
+            lines_event.wait()
+
+    def output(self, line):
+        line, kind, timestamp = line
+        formatted_time = datetime.datetime.fromtimestamp(timestamp).isoformat()
+        sys.stdout.write('[egior:%s %s] %s' % (kind, formatted_time, line))
+
+sr_out = StreamReader(p.stdout, 'O')
+sr_out.start()
+sr_err = StreamReader(p.stderr, 'E')
+sr_err.start()
+merger = Merger()
+merger.start()
+
+rv = p.wait()
+if rv != 0:
+    print('Failed to run: ' + sys.argv[1:].join(' '))
+sr_out.event.wait()
+sr_err.event.wait()
+
+done = True
+lines_event.set()
+merger.event.wait()
+
