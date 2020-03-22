@@ -71,7 +71,7 @@ merger.start()
 
 rv = p.wait()
 if rv != 0:
-    sys.stderr.write('Failed to run: ' + sys.argv[1:].join(' ') + "\n")
+    sys.stderr.write('Failed to run: ' + ' '.join(sys.argv[1:]) + "\n")
     exit(1)
 sr_out.event.wait()
 sr_err.event.wait()
