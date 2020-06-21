@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env -S python -u
 
 import subprocess, sys, os, threading, time, datetime
 
