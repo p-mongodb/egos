@@ -25,6 +25,7 @@ int init_state(state *st) {
   st->capacity = 16300;
   st->pos = 0;
   st->done = 0;
+  return 0;
 }
 
 int forward(char stream, int fd, state *st) {
