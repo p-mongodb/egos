@@ -114,11 +114,11 @@ int main(int argc, char * const argv[]) {
   }
   
   if (pipe(out_fds)) {
-    fputs("Failed to create stdout pipe\n", stderr);
+    fputs("egos: Failed to create stdout pipe\n", stderr);
     exit(2);
   }
   if (pipe(err_fds)) {
-    fputs("Failed to create stdout pipe\n", stderr);
+    fputs("egos: Failed to create stdout pipe\n", stderr);
     exit(2);
   }
   
@@ -129,18 +129,18 @@ int main(int argc, char * const argv[]) {
       exit(1);
     case 0:
       if (dup2(out_fds[1], 1) == -1) {
-        fputs("Failed to dup stdout\n", stderr);
+        fputs("egos: Failed to dup stdout\n", stderr);
         exit(2);
       }
       close(out_fds[1]);
       if (dup2(err_fds[1], 2) == -1) {
-        fputs("Failed to dup stdout\n", stderr);
+        fputs("egos: Failed to dup stdout\n", stderr);
         exit(2);
       }
       close(err_fds[1]);
       execvp(argv[1], argv + 1);
       if (asprintf(&str, "Failed to exec child: %s", argv[1]) == -1) {
-        fputs("Out of memory\n", stderr);
+        fputs("egos: Out of memory\n", stderr);
         exit(3);
       }
       perror(str);
@@ -152,11 +152,11 @@ int main(int argc, char * const argv[]) {
       fcntl(out_fds[0], F_SETFL, O_NONBLOCK);
       fcntl(out_fds[1], F_SETFL, O_NONBLOCK);
       if (init_state(&out_state) == -1) {
-        fputs("Failed to init state\n", stderr);
+        fputs("egos: Failed to init state\n", stderr);
         exit(2);
       }
       if (init_state(&err_state) == -1) {
-        fputs("Failed to init state\n", stderr);
+        fputs("egos: Failed to init state\n", stderr);
         exit(2);
       }
       for (;;) {
@@ -174,13 +174,13 @@ int main(int argc, char * const argv[]) {
         } else if (rv) {
           if (FD_ISSET(out_fds[0], &rfds)) {
             if (forward('O', out_fds[0], &out_state) == -1) {
-              fputs("Failed to forward output\n", stderr);
+              fputs("egos: Failed to forward output\n", stderr);
               exit(3);
             }
           }
           if (FD_ISSET(err_fds[0], &rfds)) {
             if (forward('E', err_fds[0], &err_state) == -1) {
-              fputs("Failed to forward error\n", stderr);
+              fputs("egos: Failed to forward error\n", stderr);
               exit(3);
             }
           }
