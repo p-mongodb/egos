@@ -1,5 +1,6 @@
 #define _GNU_SOURCE
 #include <fcntl.h>
+#include <time.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/select.h>
@@ -26,10 +27,14 @@ int init_state(state *st) {
   st->done = 0;
 }
 
-int forward(int fd, state *st) {
+int forward(char stream, int fd, state *st) {
   ssize_t bytes_read, remaining;
   char *start_search, *start_print;
   char *ptr, *next_ptr = NULL;
+  struct timespec timespec;
+  struct tm tm;
+  int time_initialized = 0;
+  char time_buf[201];
 
   // Position where we start searching for a newline.
   // Assume the buffer currently does not contain one.
@@ -69,7 +74,16 @@ int forward(int fd, state *st) {
     // Terminate the string.
     *ptr = 0;
     // Print the string. We removed the newline from the string.
-    puts(start_print);
+    if (!time_initialized) {
+      // TODO handle errors
+      clock_gettime(CLOCK_REALTIME, &timespec);
+      localtime_r(&timespec.tv_sec, &tm);
+      if (!strftime(time_buf, 200, "%Y-%m-%dT%H:%M:%S", &tm)) {
+        return -1;
+      }
+      time_initialized = 1;
+    }
+    printf("[egos:%c %s.%06ld] %s\n", stream, time_buf, timespec.tv_nsec / 1000, start_print);
     // Advance starting pointer to the beginning of next line.
     start_search = start_print = next_ptr = ptr + 1;
   }
@@ -159,13 +173,13 @@ int main(int argc, char * const argv[]) {
           exit(3);
         } else if (rv) {
           if (FD_ISSET(out_fds[0], &rfds)) {
-            if (forward(out_fds[0], &out_state) == -1) {
+            if (forward('O', out_fds[0], &out_state) == -1) {
               fputs("Failed to forward output\n", stderr);
               exit(3);
             }
           }
           if (FD_ISSET(err_fds[0], &rfds)) {
-            if (forward(err_fds[0], &err_state) == -1) {
+            if (forward('E', err_fds[0], &err_state) == -1) {
               fputs("Failed to forward error\n", stderr);
               exit(3);
             }
