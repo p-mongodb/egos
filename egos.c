@@ -56,7 +56,12 @@ int forward(char stream, int fd, state *st) {
   }
 
   // Read up to remaining buffer capacity.
-  remaining = bytes_read = read(fd, st->buf + st->pos, remaining);
+  // Request up to 100 bytes at a time to avoid buffering of output by
+  // the kernel.
+  if (remaining > 100) {
+    remaining = 100;
+  }
+  bytes_read = read(fd, st->buf + st->pos, remaining);
   if (bytes_read <= 0) {
     st->done = 1;
     return 0;
