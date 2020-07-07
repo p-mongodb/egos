@@ -132,7 +132,7 @@ int main(int argc, char * const argv[]) {
   pid = fork();
   switch (pid) {
     case -1:
-      perror("Failed to fork child");
+      perror("egos: Failed to fork child");
       exit(1);
     case 0:
       if (dup2(out_fds[1], 1) == -1) {
@@ -146,7 +146,8 @@ int main(int argc, char * const argv[]) {
       }
       close(err_fds[1]);
       execvp(argv[1], argv + 1);
-      if (asprintf(&str, "Failed to exec child: %s", argv[1]) == -1) {
+      puts("ok");
+      if (asprintf(&str, "egos: Failed to exec child: %s", argv[1]) == -1) {
         fputs("egos: Out of memory\n", stderr);
         exit(3);
       }
@@ -211,6 +212,7 @@ int main(int argc, char * const argv[]) {
         puts(err_state.buf);
       }
       waitpid(pid, &status, 0);
-      exit(status);
+      // TODO does WIFEXITED also need to be called?
+      exit(WEXITSTATUS(status));
   }
 }
