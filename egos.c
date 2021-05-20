@@ -120,6 +120,21 @@ int main(int argc, char * const argv[]) {
     exit(2);
   }
   
+  if (setvbuf(stdin, NULL, _IONBF, 0)) {
+    fputs("egos: Failed to unbuffer stdin\n", stderr);
+    exit(2);
+  }
+  
+  if (setvbuf(stdout, NULL, _IONBF, 0)) {
+    fputs("egos: Failed to unbuffer stdout\n", stderr);
+    exit(2);
+  }
+  
+  if (setvbuf(stderr, NULL, _IONBF, 0)) {
+    fputs("egos: Failed to unbuffer stderr\n", stderr);
+    exit(2);
+  }
+  
   if (pipe(out_fds)) {
     fputs("egos: Failed to create stdout pipe\n", stderr);
     exit(2);
